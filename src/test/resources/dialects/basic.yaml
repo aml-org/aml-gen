@@ -1,0 +1,21 @@
+#%Dialect 1.0
+
+dialect: Literals
+version: 1.0
+
+nodeMappings:
+  RootNode:
+    classTerm: tmp.Root
+    mapping:
+      str:
+        propertyTerm: tmp.str
+        range: string
+      int:
+        propertyTerm: tmp.int
+        range: integer
+
+documents:
+  root:
+    encodes: RootNode
+external:
+  tmp: http://test.com/tmp#

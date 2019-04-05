@@ -1,0 +1,45 @@
+#%Dialect 1.0
+
+dialect: Literals
+version: 1.0
+
+nodeMappings:
+  RootNode:
+    classTerm: tmp.Root
+    mapping:
+      str:
+        propertyTerm: tmp.str
+        range: string
+      int:
+        propertyTerm: tmp.int
+        range: integer
+      float:
+        propertyTerm: tmp.float
+        range: float
+      double:
+        propertyTerm: tmp.double
+        range: double
+      boolean:
+        propertyTerm: tmp.boolean
+        range: boolean
+      date:
+        propertyTerm: tmp.date
+        range: date
+      timestamp:
+        propertyTerm: tmp.timestamp
+        range: dateTime
+      link:
+        propertyTerm: tmp.link
+        range: link
+      uriLiteral:
+        propertyTerm: tmp.uriLiteral
+        range: anyUri
+      any:
+        propertyTerm: tmp.any
+        range: any
+
+documents:
+  root:
+    encodes: RootNode
+external:
+  tmp: http://test.com/tmp#
