@@ -1,0 +1,8 @@
+definition
+.git
+Dockerfile
+helm
+Jenkinsfile
+out
+.gradle
+build
