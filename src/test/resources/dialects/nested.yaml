@@ -1,0 +1,27 @@
+#%Dialect 1.0
+
+dialect: Nested
+version: 1.0
+
+nodeMappings:
+  RootNode:
+    classTerm: tmp.Root
+    mapping:
+      str:
+        propertyTerm: tmp.str
+        range: string
+      other:
+        propertyTerm: tmp.other
+        range: OtherNode
+  OtherNode:
+    classTerm: tmp.Other
+    mapping:
+      str:
+        propertyTerm: tmp.str
+        range: string
+
+documents:
+  root:
+    encodes: RootNode
+external:
+  tmp: http://test.com/tmp#

@@ -9,33 +9,43 @@ nodeMappings:
     mapping:
       str:
         propertyTerm: tmp.str
+        mandatory: true
         range: string
       int:
         propertyTerm: tmp.int
+        mandatory: true
         range: integer
       float:
         propertyTerm: tmp.float
+        mandatory: true
         range: float
       double:
         propertyTerm: tmp.double
+        mandatory: true
         range: double
       boolean:
         propertyTerm: tmp.boolean
+        mandatory: true
         range: boolean
       date:
         propertyTerm: tmp.date
+        mandatory: true
         range: date
       timestamp:
         propertyTerm: tmp.timestamp
+        mandatory: true
         range: dateTime
       link:
         propertyTerm: tmp.link
+        mandatory: true
         range: link
       uriLiteral:
         propertyTerm: tmp.uriLiteral
+        mandatory: true
         range: anyUri
       any:
         propertyTerm: tmp.any
+        mandatory: true
         range: any
 
 documents:

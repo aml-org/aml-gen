@@ -1,6 +1,6 @@
 #%Dialect 1.0
 
-dialect: Literals
+dialect: Basic
 version: 1.0
 
 nodeMappings:
@@ -10,9 +10,11 @@ nodeMappings:
       str:
         propertyTerm: tmp.str
         range: string
+        mandatory: false
       int:
         propertyTerm: tmp.int
         range: integer
+        mandatory: true
 
 documents:
   root:
