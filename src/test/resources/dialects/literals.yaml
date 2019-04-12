@@ -31,6 +31,10 @@ nodeMappings:
         propertyTerm: tmp.date
         mandatory: true
         range: date
+#      time:
+#        propertyTerm: tmp.time
+#        mandatory: true
+#        range: time
       timestamp:
         propertyTerm: tmp.timestamp
         mandatory: true
@@ -43,10 +47,10 @@ nodeMappings:
         propertyTerm: tmp.uriLiteral
         mandatory: true
         range: anyUri
-      any:
-        propertyTerm: tmp.any
-        mandatory: true
-        range: any
+#      any:
+#        propertyTerm: tmp.any
+#        mandatory: true
+#        range: any
 
 documents:
   root:

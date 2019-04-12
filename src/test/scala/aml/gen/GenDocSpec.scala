@@ -15,8 +15,9 @@ class GenDocSpec extends AsyncFlatSpec with Matchers with AmfOps with GeneratorD
   private val literals: String = "/dialects/literals.yaml"
   private val basic: String    = "/dialects/basic.yaml"
   private val nested: String   = "/dialects/nested.yaml"
+  private val times: String    = "/dialects/times.yaml"
 
-  private val fixture: Seq[String] = Seq(basic, nested)
+  private val fixture: Seq[String] = Seq(literals)
 
   fixture.foreach { file =>
     "GenDoc" should s"create a Gen[YDocument] for $file" in {
@@ -36,7 +37,7 @@ class GenDocSpec extends AsyncFlatSpec with Matchers with AmfOps with GeneratorD
 
   private def validate(dialect: Dialect, document: YDocument): Assertion = {
     // Until https://github.com/scalatest/scalatest/issues/1370
-    Await.result(parseAml(document, dialect.nameAndVersion()), 5 second)
+    Await.result(parseAml(document, dialect.nameAndVersion()), 600 second)
     succeed
   }
 
