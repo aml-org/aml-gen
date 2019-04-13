@@ -1,0 +1,26 @@
+#%Dialect 1.0
+
+dialect: Restrictions
+version: 1.0
+
+nodeMappings:
+  RootNode:
+    classTerm: tmp.Root
+    mapping:
+      int:
+        propertyTerm: tmp.int
+        mandatory: true
+        range: integer
+        minimum: 1
+        maximum: 20
+      str:
+        propertyTerm: tmp.str
+        range: string
+        mandatory: false
+        pattern: "[a-zA-Z]+-[a-zA-Z0-9]+"
+
+documents:
+  root:
+    encodes: RootNode
+external:
+  tmp: http://test.com/tmp#

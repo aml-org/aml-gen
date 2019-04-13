@@ -15,9 +15,9 @@ class GenDocSpec extends AsyncFlatSpec with Matchers with AmfOps with GeneratorD
   private val literals: String = "/dialects/literals.yaml"
   private val basic: String    = "/dialects/basic.yaml"
   private val nested: String   = "/dialects/nested.yaml"
-  private val times: String    = "/dialects/times.yaml"
+  private val res: String      = "/dialects/restrictions.yaml"
 
-  private val fixture: Seq[String] = Seq(literals)
+  private val fixture: Seq[String] = Seq(literals, basic, nested, res)
 
   fixture.foreach { file =>
     "GenDoc" should s"create a Gen[YDocument] for $file" in {

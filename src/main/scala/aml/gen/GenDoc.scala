@@ -3,6 +3,8 @@ package aml.gen
 import java.text.SimpleDateFormat
 import java.util.Date
 
+import amf.core.model.domain.AmfScalar
+import amf.core.parser.Value
 import amf.core.vocabulary.Namespace.{Shapes, Xsd}
 import amf.plugins.document.vocabularies.model.document.Dialect
 import amf.plugins.document.vocabularies.model.domain.{NodeMapping, PropertyMapping}
@@ -100,11 +102,27 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappings) {
   }
 
   private def string(property: PropertyMapping): Gen[YNode] = {
-    Gen.alphaStr.map(YNode.fromString)
+    val patternValue = getFieldValue("pattern", property)
+    val gen          = patternValue.map(v => RegexpGen.from(v.value.toString)).getOrElse(Gen.alphaStr)
+    gen.map(YNode.fromString)
   }
 
   private def integer(property: PropertyMapping): Gen[YNode] = {
-    Gen.posNum[Int].map(YNode.fromInt)
+    val minValue = getFieldValue("minInclusive", property).map(_.value.asInstanceOf[AmfScalar].toNumber.intValue())
+    val maxValue = getFieldValue("maxInclusive", property).map(_.value.asInstanceOf[AmfScalar].toNumber.intValue())
+    val intGen = (minValue, maxValue) match {
+      case (Some(min), Some(max)) => Gen.chooseNum[Int](min, max)
+      case (Some(min), None)      => Gen.chooseNum[Int](min, Int.MaxValue)
+      case (None, Some(max))      => Gen.chooseNum[Int](Int.MinValue, max)
+      case _                      => Arbitrary.arbInt.arbitrary
+    }
+    intGen.map(YNode.fromInt)
+  }
+
+  private def getFieldValue[T](fieldName: String, property: PropertyMapping): Option[Value] = {
+    val propertyFields = property.fields
+    val optField       = propertyFields.fieldsMeta().find(_.value.name == fieldName)
+    optField.flatMap(propertyFields.getValueAsOption)
   }
 
   private def boolean(property: PropertyMapping): Gen[YNode] = {
