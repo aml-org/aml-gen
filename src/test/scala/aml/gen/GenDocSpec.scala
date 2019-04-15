@@ -16,8 +16,9 @@ class GenDocSpec extends AsyncFlatSpec with Matchers with AmfOps with GeneratorD
   private val basic: String    = "/dialects/basic.yaml"
   private val nested: String   = "/dialects/nested.yaml"
   private val res: String      = "/dialects/restrictions.yaml"
+  private val multi: String    = "/dialects/multiples.yaml"
 
-  private val fixture: Seq[String] = Seq(literals, basic, nested, res)
+  private val fixture: Seq[String] = Seq(multi)
 
   fixture.foreach { file =>
     "GenDoc" should s"create a Gen[YDocument] for $file" in {
@@ -25,7 +26,6 @@ class GenDocSpec extends AsyncFlatSpec with Matchers with AmfOps with GeneratorD
         dialect <- parse(file)
       } yield {
         val documents = GenDoc.doc(dialect)
-
         forAll(documents) { doc =>
           println(YamlRender.render(doc))
           doc.headComment should be(s"%${dialect.nameAndVersion()}")

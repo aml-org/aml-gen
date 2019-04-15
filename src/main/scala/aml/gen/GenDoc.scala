@@ -16,6 +16,10 @@ import scala.collection.mutable
 
 case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappings) {
 
+  private val genDate: Gen[Date] = Gen.chooseNum(-2208988800000L, 32503680000000L) map { new Date(_) }
+  private val datetimeFormat     = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+  private val dateFormat         = new SimpleDateFormat("yyyy-MM-dd")
+
   def gen(dialect: Dialect): Gen[YDocument] = {
 
     mappings.values.foreach { m =>
@@ -52,17 +56,19 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappings) {
 
   private def literal(range: String, property: PropertyMapping): Gen[Option[YNode]] = {
     optional(property) {
-      range match {
-        case v if (Xsd + "boolean").iri() == v  => boolean(property)
-        case v if (Xsd + "integer").iri() == v  => integer(property)
-        case v if (Xsd + "string").iri() == v   => string(property)
-        case v if (Xsd + "float").iri() == v    => double(property)
-        case v if (Xsd + "double").iri() == v   => double(property)
-        case v if (Shapes + "link").iri() == v  => link(property)
-        case v if (Xsd + "anyUri").iri() == v   => link(property)
-        case v if (Xsd + "date").iri() == v     => date(property)
-        case v if (Xsd + "dateTime").iri() == v => datetime(property)
-        case _                                  => string(property)
+      multiple(property) {
+        range match {
+          case v if (Xsd + "boolean").iri() == v  => boolean(property)
+          case v if (Xsd + "integer").iri() == v  => integer(property)
+          case v if (Xsd + "string").iri() == v   => string(property)
+          case v if (Xsd + "float").iri() == v    => double(property)
+          case v if (Xsd + "double").iri() == v   => double(property)
+          case v if (Shapes + "link").iri() == v  => link(property)
+          case v if (Xsd + "anyUri").iri() == v   => link(property)
+          case v if (Xsd + "date").iri() == v     => date(property)
+          case v if (Xsd + "dateTime").iri() == v => datetime(property)
+          case _                                  => string(property)
+        }
       }
     }
   }
@@ -70,13 +76,11 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappings) {
   private def obj(property: PropertyMapping): Gen[Option[YNode]] = {
     val range = property.objectRange().head.value() // Support for Unions?
     optional(property) {
-      nodes.getOrElseUpdate(range, node(mappings(range))).map(YNode.fromMap)
+      multiple(property) {
+        nodes.getOrElseUpdate(range, node(mappings(range))).map(YNode.fromMap)
+      }
     }
   }
-
-  private val genDate: Gen[Date] = Gen.chooseNum(-2208988800000L, 32503680000000L) map { new Date(_) }
-  private val datetimeFormat     = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-  private val dateFormat         = new SimpleDateFormat("yyyy-MM-dd")
 
   private def date(property: PropertyMapping): Gen[YNode] =
     genDate.map(gDate => {
@@ -113,6 +117,16 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappings) {
 
   private def boolean(property: PropertyMapping): Gen[YNode] = {
     Arbitrary.arbBool.arbitrary.map(YNode.fromBool)
+  }
+
+  private def multiple(property: PropertyMapping)(g: Gen[YNode]): Gen[YNode] = {
+    if (property.allowMultiple().value()) {
+      val isMandatory = property.minCount().value() != 0
+      val gen         = if (isMandatory) Gen.nonEmptyListOf(g) else Gen.listOf(g)
+      gen.map(YSequence.apply(_: _*))
+    } else {
+      g
+    }
   }
 
   private def optional[T](property: PropertyMapping)(g: Gen[T]): Gen[Option[T]] = {

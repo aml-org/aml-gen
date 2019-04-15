@@ -1,0 +1,32 @@
+#%Dialect 1.0
+
+dialect: Multiples
+version: 1.0
+
+nodeMappings:
+  RootNode:
+    classTerm: tmp.Root
+    mapping:
+      str:
+        propertyTerm: tmp.str
+        range: string
+        allowMultiple: true
+        pattern: "[a-zA-Z]+-[a-zA-Z0-9]+"
+      obj:
+        propertyTerm: tmp.obj
+        range: OtherNode
+        allowMultiple: true
+        mandatory: true
+  OtherNode:
+    classTerm: tmp.Other
+    mapping:
+      int:
+        propertyTerm: tmp.int
+        range: integer
+        mandatory: true
+
+documents:
+  root:
+    encodes: RootNode
+external:
+  tmp: http://test.com/tmp#
