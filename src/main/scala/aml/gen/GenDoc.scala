@@ -3,8 +3,6 @@ package aml.gen
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import amf.core.model.domain.AmfScalar
-import amf.core.parser.Value
 import amf.core.vocabulary.Namespace.{Shapes, Xsd}
 import amf.plugins.document.vocabularies.model.document.Dialect
 import amf.plugins.document.vocabularies.model.domain.{NodeMapping, PropertyMapping}
