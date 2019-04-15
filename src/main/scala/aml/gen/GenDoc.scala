@@ -102,27 +102,15 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappings) {
   }
 
   private def string(property: PropertyMapping): Gen[YNode] = {
-    val patternValue = getFieldValue("pattern", property)
-    val gen          = patternValue.map(v => RegexpGen.from(v.value.toString)).getOrElse(Gen.alphaStr)
-    gen.map(YNode.fromString)
+    val patternValue = property.pattern().option()
+    val stringGen    = patternValue.map(RegexpGen.from).getOrElse(Gen.alphaStr)
+    stringGen.map(YNode.fromString)
   }
 
   private def integer(property: PropertyMapping): Gen[YNode] = {
-    val minValue = getFieldValue("minInclusive", property).map(_.value.asInstanceOf[AmfScalar].toNumber.intValue())
-    val maxValue = getFieldValue("maxInclusive", property).map(_.value.asInstanceOf[AmfScalar].toNumber.intValue())
-    val intGen = (minValue, maxValue) match {
-      case (Some(min), Some(max)) => Gen.chooseNum[Int](min, max)
-      case (Some(min), None)      => Gen.chooseNum[Int](min, Int.MaxValue)
-      case (None, Some(max))      => Gen.chooseNum[Int](Int.MinValue, max)
-      case _                      => Arbitrary.arbInt.arbitrary
-    }
-    intGen.map(YNode.fromInt)
-  }
-
-  private def getFieldValue[T](fieldName: String, property: PropertyMapping): Option[Value] = {
-    val propertyFields = property.fields
-    val optField       = propertyFields.fieldsMeta().find(_.value.name == fieldName)
-    optField.flatMap(propertyFields.getValueAsOption)
+    val minValue = property.minimum().option().map(_.toInt)
+    val maxValue = property.maximum().option().map(_.toInt)
+    Gen.chooseNum[Int](minValue.getOrElse(Int.MinValue), maxValue.getOrElse(Int.MaxValue)).map(YNode.fromInt)
   }
 
   private def boolean(property: PropertyMapping): Gen[YNode] = {

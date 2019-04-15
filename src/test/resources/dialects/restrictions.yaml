@@ -7,8 +7,18 @@ nodeMappings:
   RootNode:
     classTerm: tmp.Root
     mapping:
-      int:
-        propertyTerm: tmp.int
+      intMin:
+        propertyTerm: tmp.intMin
+        mandatory: true
+        range: integer
+        minimum: 20
+      intMax:
+        propertyTerm: tmp.intMax
+        mandatory: true
+        range: integer
+        maximum: 200
+      intMaxMin:
+        propertyTerm: tmp.intMaxMin
         mandatory: true
         range: integer
         minimum: 1
