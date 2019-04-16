@@ -1,0 +1,47 @@
+#%Dialect 1.0
+
+dialect: Union
+version: 1.0
+
+nodeMappings:
+  FigureUnionNode:
+    union:
+      - Circle
+      - Square
+      - Triangule
+
+  Circle:
+    classTerm: tmp.Circle
+    mapping:
+      radius:
+        propertyTerm: tmp.radius
+        range: double
+        mandatory: true
+
+  Square:
+    classTerm: tmp.Square
+    mapping:
+      side:
+        propertyTerm: tmp.side
+        range: integer
+        mandatory: true
+        minimum: 1
+
+  Triangule:
+    classTerm: tmp.Square
+    mapping:
+      base:
+        propertyTerm: tmp.base
+        range: integer
+        mandatory: true
+      height:
+        propertyTerm: tmp.height
+        range: integer
+        mandatory: true
+
+documents:
+  root:
+    encodes: FigureUnionNode
+
+external:
+  tmp: http://test.com/tmp#

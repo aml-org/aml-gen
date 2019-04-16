@@ -1,0 +1,38 @@
+#%Dialect 1.0
+
+dialect: Canvas
+version: 1.0
+
+uses:
+  figures: library/figures.yaml
+
+nodeMappings:
+
+  Canvas:
+    classTerm: tmp.Root
+    mapping:
+      author:
+        propertyTerm: tmp.author
+        range: string
+        mandatory: true
+      name:
+        propertyTerm: tmp.name
+        range: string
+        mandatory: true
+      description:
+        propertyTerm: tmp.description
+        range: string
+        mandatory: true
+      figures:
+        propertyTerm: tmp.figure
+#        range: figures.FigureUnionNode
+        range: figures.Circle
+        allowMultiple: true
+        mandatory: true
+
+documents:
+  root:
+    encodes: Canvas
+
+external:
+  tmp: http://test.com/canvas#

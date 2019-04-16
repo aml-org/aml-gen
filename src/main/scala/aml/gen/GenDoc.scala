@@ -3,10 +3,11 @@ package aml.gen
 import java.text.SimpleDateFormat
 import java.util.Date
 
+import amf.core.model.domain.DomainElement
 import amf.core.vocabulary.Namespace.{Shapes, Xsd}
-import amf.plugins.document.vocabularies.model.document.Dialect
-import amf.plugins.document.vocabularies.model.domain.{NodeMapping, PropertyMapping}
-import aml.gen.GenDoc.{NodeGenerators, NodeMappings}
+import amf.plugins.document.vocabularies.model.document.{Dialect, DialectLibrary}
+import amf.plugins.document.vocabularies.model.domain.{NodeMappable, NodeMapping, PropertyMapping, UnionNodeMapping}
+import aml.gen.GenDoc.{NodeGenerators, NodeMappables}
 import org.scalacheck.Gen.{const, frequency, some}
 import org.scalacheck.{Arbitrary, Gen}
 import org.yaml.model._
@@ -14,11 +15,11 @@ import wolfendale.scalacheck.regexp.RegexpGen
 
 import scala.collection.mutable
 
-case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappings) {
+case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables) {
 
-  private val genDate: Gen[Date] = Gen.chooseNum(-2208988800000L, 32503680000000L) map { new Date(_) }
-  private val datetimeFormat     = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-  private val dateFormat         = new SimpleDateFormat("yyyy-MM-dd")
+  private val genDate        = Gen.chooseNum(-2208988800000L, 32503680000000L) map { new Date(_) }
+  private val datetimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+  private val dateFormat     = new SimpleDateFormat("yyyy-MM-dd")
 
   def gen(dialect: Dialect): Gen[YDocument] = {
 
@@ -35,7 +36,18 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappings) {
     }
   }
 
-  private def node(node: NodeMapping): Gen[YMap] = {
+  private def node(node: NodeMappable): Gen[YMap] = node match {
+    case n: NodeMapping      => nodeMapping(n)
+    case u: UnionNodeMapping => unionNode(u)
+  }
+
+  private def unionNode(union: UnionNodeMapping): Gen[YMap] = {
+    val gen = Gen.oneOf(union.objectRange().map(o => mappings(o.value()))).flatMap(node)
+    nodes.put(union.id, gen)
+    gen
+  }
+
+  private def nodeMapping(node: NodeMapping): Gen[YMap] = {
     val props = Gen.sequence[IndexedSeq[Option[YMapEntry]], Option[YMapEntry]](node.propertiesMapping().map(prop))
     val gen   = props.map(entries => YMap(entries.flatten, ""))
     nodes.put(node.id, gen)
@@ -74,7 +86,7 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappings) {
   }
 
   private def obj(property: PropertyMapping): Gen[Option[YNode]] = {
-    val range = property.objectRange().head.value() // Support for Unions?
+    val range = property.objectRange().head.value()
     optional(property) {
       multiple(property) {
         nodes.getOrElseUpdate(range, node(mappings(range))).map(YNode.fromMap)
@@ -100,7 +112,11 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappings) {
   }
 
   private def double(property: PropertyMapping): Gen[YNode] = {
-    Arbitrary.arbDouble.arbitrary.map(YNode.fromDouble)
+    val minValue = property.minimum().option()
+    val maxValue = property.maximum().option()
+    Gen
+      .chooseNum[Double](minValue.getOrElse(Double.MinValue), maxValue.getOrElse(Double.MaxValue))
+      .map(YNode.fromDouble)
   }
 
   private def string(property: PropertyMapping): Gen[YNode] = {
@@ -121,8 +137,7 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappings) {
 
   private def multiple(property: PropertyMapping)(g: Gen[YNode]): Gen[YNode] = {
     if (property.allowMultiple().value()) {
-      val isMandatory = property.minCount().value() != 0
-      val gen         = if (isMandatory) Gen.nonEmptyListOf(g) else Gen.listOf(g)
+      val gen = if (property.minCount().value() != 0) Gen.nonEmptyListOf(g) else Gen.listOf(g)
       gen.map(YSequence.apply(_: _*))
     } else {
       g
@@ -141,13 +156,23 @@ object GenDoc {
 
   type NodeGenerators = mutable.Map[String, Gen[YMap]]
 
-  type NodeMappings = Map[String, NodeMapping]
+  type NodeMappables = mutable.Map[String, NodeMappable]
 
   def doc(dialect: Dialect): Gen[YDocument] = {
 
-    val mappings = dialect.declares.collect {
-      case mapping: NodeMapping => mapping.id -> mapping
-    } toMap
+    val mappings: NodeMappables = mutable.Map()
+
+    def collect(declared: Seq[DomainElement]): Unit = {
+      declared.foreach {
+        case m: NodeMappable => mappings.put(m.id, m)
+      }
+    }
+
+    dialect.references.foreach {
+      case ref: DialectLibrary => collect(ref.declares)
+    }
+
+    collect(dialect.declares)
 
     GenDoc(mutable.Map(), mappings).gen(dialect)
   }

@@ -2,6 +2,7 @@ package aml.gen
 
 import amf.AmfOps
 import amf.plugins.document.vocabularies.model.document.Dialect
+import org.mulesoft.common.io.Fs
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{Assertion, AsyncFlatSpec, Matchers}
 import org.yaml.model.YDocument
@@ -12,18 +13,12 @@ import scala.concurrent.duration._
 
 class GenDocSpec extends AsyncFlatSpec with Matchers with AmfOps with GeneratorDrivenPropertyChecks {
 
-  private val literals: String = "/dialects/literals.yaml"
-  private val basic: String    = "/dialects/basic.yaml"
-  private val nested: String   = "/dialects/nested.yaml"
-  private val res: String      = "/dialects/restrictions.yaml"
-  private val multi: String    = "/dialects/multiples.yaml"
+  private val dialects = files("src/test/resources/dialects")
 
-  private val fixture: Seq[String] = Seq(multi)
-
-  fixture.foreach { file =>
+  dialects.foreach { file =>
     "GenDoc" should s"create a Gen[YDocument] for $file" in {
       for {
-        dialect <- parse(file)
+        dialect <- parse(s"/dialects/$file")
       } yield {
         val documents = GenDoc.doc(dialect)
         forAll(documents) { doc =>
@@ -42,4 +37,6 @@ class GenDocSpec extends AsyncFlatSpec with Matchers with AmfOps with GeneratorD
   }
 
   private def parse(dialect: String) = parseAml(s"file://$dialect", "Dialect 1.0").mapTo[Dialect]
+
+  private def files(directory: String) = Fs.syncFile(directory).list.filter(_.endsWith(".yaml"))
 }

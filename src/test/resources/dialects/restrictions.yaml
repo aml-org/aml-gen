@@ -7,6 +7,22 @@ nodeMappings:
   RootNode:
     classTerm: tmp.Root
     mapping:
+      doubleMin:
+        propertyTerm: tmp.doubleMin
+        mandatory: true
+        range: double
+        minimum: 30.7
+      doubleMax:
+        propertyTerm: tmp.doubleMax
+        mandatory: true
+        range: double
+        maximum: 876.9
+      doubleMaxMin:
+        propertyTerm: tmp.doubleMaxMin
+        mandatory: true
+        range: double
+        minimum: 10.2
+        maximum: 2043.3
       intMin:
         propertyTerm: tmp.intMin
         mandatory: true

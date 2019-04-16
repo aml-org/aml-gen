@@ -1,0 +1,11 @@
+#%Dialect 1.0
+
+dialect: Union Using Library
+version: 1.0
+
+uses:
+  figures: library/figures.yaml
+
+documents:
+  root:
+    encodes: figures.FigureUnionNode
