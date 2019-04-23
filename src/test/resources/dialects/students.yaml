@@ -1,0 +1,62 @@
+#%Dialect 1.0
+
+dialect: Classroom
+version: 1.0
+
+nodeMappings:
+
+  ClassroomNode:
+    classTerm: tmp.Classroom
+    mapping:
+      students:
+        propertyTerm: tmp.students
+        range: PersonNode
+        mandatory: true
+        allowMultiple: true
+        mapKey: tmp.name
+      teachers:
+        propertyTerm: tmp.teachers
+        range: PersonNode
+        mandatory: true
+        allowMultiple: true
+      subject:
+        propertyTerm: tmp.subject
+        range: string
+        mandatory: true
+      timestamp:
+        propertyTerm: tmp.timestamp
+        mandatory: true
+        range: dateTime
+      duration:
+        propertyTerm: tmp.duration
+        mandatory: true
+        range: double
+
+  PersonNode:
+    classTerm: tmp.Person
+    mapping:
+      name:
+        propertyTerm: tmp.name
+        range: string
+        mandatory: true
+      age:
+        propertyTerm: tmp.age
+        range: integer
+        mandatory: true
+        minimum: 1
+      DNI:
+        propertyTerm: tmp.DNI
+        range: string
+        pattern: "\\d{8}"
+        mandatory: true
+      role:
+        propertyTerm: tmp.role
+        range: string
+        mandatory: true
+
+documents:
+  root:
+    encodes: ClassroomNode
+
+external:
+  tmp: http://test.com/classroom#

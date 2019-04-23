@@ -25,7 +25,7 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables) {
 
     mappings.values.foreach { m =>
       if (!nodes.contains(m.id)) {
-        nodes.put(m.id, node(m))
+        node(m)
       }
     }
 
@@ -86,12 +86,37 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables) {
   }
 
   private def obj(property: PropertyMapping): Gen[Option[YNode]] = {
-    val range = property.objectRange().head.value()
     optional(property) {
       multiple(property) {
-        nodes.getOrElseUpdate(range, node(mappings(range))).map(YNode.fromMap)
+        val range    = property.objectRange().head.value()
+        val mappable = mappings(range)
+        nodes.getOrElse(range, node(mappable)).map(toNode(mappable, property, _))
       }
     }
+  }
+
+  /** Create YNode. Check if mapKey or mapValue is defined and transform if needed. */
+  private def toNode(mappable: NodeMappable, property: PropertyMapping, map: YMap): YNode = {
+    val m = property
+      .mapKeyProperty()
+      .option()
+      .flatMap(mapKey(mappable, map, _))
+      .getOrElse(map)
+    YNode.fromMap(m)
+  }
+
+  private def mapKey(mappable: NodeMappable, map: YMap, key: String): Option[YMap] = {
+    mappable
+      .asInstanceOf[NodeMapping]
+      .propertiesMapping()
+      .find(_.nodePropertyMapping().value() == key)
+      .map(k => {
+        val id = k.name().value()
+        map.entries.partition(_.key.as[String] == id) match {
+          case (keys, rest) =>
+            YMap(IndexedSeq(YMapEntry(keys.head.value, YMap(rest, ""))), "")
+        }
+      })
   }
 
   private def date(property: PropertyMapping): Gen[YNode] =
@@ -138,10 +163,34 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables) {
   private def multiple(property: PropertyMapping)(g: Gen[YNode]): Gen[YNode] = {
     if (property.allowMultiple().value()) {
       val gen = if (property.minCount().value() != 0) Gen.nonEmptyListOf(g) else Gen.listOf(g)
-      gen.map(YSequence.apply(_: _*))
+      property
+        .mapKeyProperty()
+        .option()
+        .map { _ =>
+          gen.map(sequenceToObj).filter(mapKeyUniqueness)
+        }
+        .getOrElse {
+          gen.map(nodes => YNode.fromSeq(YSequence.apply(nodes: _*)))
+        }
     } else {
       g
     }
+  }
+
+  private def mapKeyUniqueness(node: YNode): Boolean = {
+    val keys = node.as[YMap].entries.map(_.key.as[String]).toList
+    keys.distinct.size == keys.size
+  }
+
+  /** Transforms a list of YMaps to a single YMaps having each map as a entry of it */
+  private def sequenceToObj(nodes: List[YNode]): YNode = {
+    val entries = nodes
+      .map(_.value)
+      .collect {
+        case m: YMap => m.entries
+      }
+      .flatten
+    YNode.fromMap(YMap(IndexedSeq(entries: _*), ""))
   }
 
   private def optional[T](property: PropertyMapping)(g: Gen[T]): Gen[Option[T]] = {
@@ -165,6 +214,7 @@ object GenDoc {
     def collect(declared: Seq[DomainElement]): Unit = {
       declared.foreach {
         case m: NodeMappable => mappings.put(m.id, m)
+        case _               => Unit // do nothing
       }
     }
 

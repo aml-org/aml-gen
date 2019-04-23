@@ -1,0 +1,36 @@
+#%Dialect 1.0
+
+dialect: Products
+version: 1.0
+
+nodeMappings:
+
+  ProductNode:
+    classTerm: tmp.Product
+    mapping:
+      name:
+        propertyTerm: tmp.name
+        range: string
+        mandatory: true
+      ID:
+        propertyTerm: tmp.ID
+        range: string
+        pattern: "\\d{10}"
+        mandatory: true
+
+  RootNode:
+    classTerm: tmp.RootNode
+    mapping:
+      products:
+        propertyTerm: tmp.products
+        range: ProductNode
+        mandatory: true
+        allowMultiple: true
+        mapKey: tmp.ID
+
+documents:
+  root:
+    encodes: RootNode
+
+external:
+  tmp: http://test.com/root#
