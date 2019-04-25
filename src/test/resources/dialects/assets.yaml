@@ -1,0 +1,263 @@
+#%Dialect 1.0
+
+dialect: Asset
+version: 1.0
+
+external:
+  digital-repo: http://digital-repository.com/
+  schema-org: http://schema.org/
+  anypoint: http://anypoint.com/
+
+nodeMappings:
+
+  AssetNode:
+    classTerm: digital-repo.Asset
+    mapping:
+      groupId:
+        propertyTerm: anypoint.tenantId
+        range: string
+        mandatory: true
+        unique: true
+        # immutable
+      assetId:
+        propertyTerm: digital-repo.assetId
+        range: string
+        mandatory: true
+        unique: true
+        # immutable
+      name:
+        propertyTerm: schema-org.name
+        range: string
+        mandatory: true
+        # mutable
+      description:
+        propertyTerm: schema-org.description
+        range: string
+        mandatory: false
+        # mutable
+      createdAt:
+        propertyTerm: schema-org.dateCreated
+        range: date
+        mandatory: true
+        # immutable
+      updatedAt:
+        propertyTerm: schema-org.dateModified
+        range: date
+        # mutable
+      majorReleases:
+        propertyTerm: digital-repo.majorRelease
+        range: MajorReleaseNode
+        mapKey: schema-org.name
+        allowMultiple: true
+        # mutable
+      isGenerated:
+        propertyTerm: digital-repo.isGenerated
+        range: boolean
+        mandatory: true
+        # immutable
+      metadata:
+        propertyTerm: anypoint.metadata
+        range: link
+        # immutable
+
+  WebAPISpecAssetNode:
+    classTerm: digital-repo.WebAPISpecAsset
+    extends: AssetNode
+
+  WebAPISpecFragmentAssetNode:
+    classTerm: digital-repo.WebAPISpecFragmentAsset
+    extends: AssetNode
+
+  MuleAppAssetNode:
+    classTerm: digital-repo.MuleAppAsset
+    extends: AssetNode
+
+  MuleConnectorAssetNode:
+    classTerm: digital-repo.MuleConnectorAsset
+    extends: AssetNode
+
+  MuleTemplateAssetNode:
+    classTerm: digital-repo.MuleTemplateAsset
+    extends: AssetNode
+
+  MuleExampleAssetNode:
+    classTerm: digital-repo.MuleExampleAsset
+    extends: AssetNode
+
+  MulePolicyAssetNode:
+    classTerm: digital-repo.MulePolicyAsset
+    extends: AssetNode
+
+  SOAPSpecAssetNode:
+    classTerm: digital-repo.SOAPSpecAsset
+    extends: AssetNode
+
+  UnknownSpecAPIAssetNode:
+    classTerm: digital-repo.UnknownSpecAPIAsset
+    extends: AssetNode
+
+  CustomAssetNode:
+    classTerm: digital-repo.CustomAsset
+    extends: AssetNode
+
+  AssetUnionNode:
+    union:
+      - WebAPISpecAssetNode
+      - WebAPISpecFragmentAssetNode
+      - MuleAppAssetNode
+      - MuleConnectorAssetNode
+      - MuleTemplateAssetNode
+      - MuleExampleAssetNode
+      - MulePolicyAssetNode
+      - SOAPSpecAssetNode
+      - UnknownSpecAPIAssetNode
+      - CustomAssetNode
+    typeDiscriminator:
+      WebAPISpec: WebAPISpecAssetNode
+      WebAPISpecFragment: WebAPISpecFragmentAssetNode
+      MuleApp: MuleAppAssetNode
+      MuleConnector: MuleConnectorAssetNode
+      MuleTemplate: MuleTemplateAssetNode
+      MuleExample: MuleExampleAssetNode
+      MulePolicy: MulePolicyAssetNode
+      SOAPSpec: SOAPSpecAssetNode
+      UnknownAPI: UnknownSpecAPIAssetNode
+      Custom: CustomAssetNode
+    typeDiscriminatorName: assetType
+
+  MajorReleaseNode:
+    classTerm: digital-repo.MajorRelease
+    mapping:
+      majorVersion:
+        propertyTerm: digital-repo.majorVersion
+        range: integer
+        mandatory: true
+        unique: true
+        # immutable
+      displayName:
+        propertyTerm: schema-org.name
+        range: string
+        mandatory: true
+        # immutable
+      releases:
+        propertyTerm: digital-repo.release
+        range: ReleaseNode
+        allowMultiple: true
+        # mutable
+      additionalTechnicalContent:
+        propertyTerm: schema-org.documentation
+        range: link # DocumentationNode
+        allowMultiple: true
+        # mutable
+
+  DocumentationNode:
+    classTerm: schema-org.TechArticle
+    mapping:
+      title:
+        propertyTerm: schema-org.title
+        range: string
+        mandatory: true
+        unique: true
+        # mutable
+      content:
+        propertyTerm: schema-org.articleBody
+        range: string
+        mandatory: true
+        # mutable
+
+  ReleaseNode:
+    classTerm: digital-repo.Release
+    mapping:
+      minorVersion:
+        propertyTerm: digital-repo.minorVersion
+        range: integer
+        mandatory: true
+        unique: true
+        # immutable
+      patchVersion:
+        propertyTerm: digital-repo.patchVersion
+        range: integer
+        mandatory: true
+        unique: true
+        # immutable
+      isMutable:
+        # Changing from isSnapshot to isMutable
+        propertyTerm: digital-repo.isSnapshot
+        range: boolean
+        mandatory: true
+        # immutable
+      files:
+        propertyTerm: digital-repo.file
+        range: FileNode
+        allowMultiple: true
+        # immutable -> implementation of snapshots make this mutable (and icons)
+      dependencies:
+        propertyTerm: digital-repo.dependency
+        range: link
+        allowMultiple: true
+        # immutable -> implementation of snapshots make this mutable
+      status:
+        propertyTerm: digital-repo.status
+        range: string
+        mandatory: true
+        # mutable
+      createdBy:
+        propertyTerm: schema-org.creator
+        range: string # link? uri?
+        mandatory: true
+        # immutable -> check snapshots
+      averageRating:
+        propertyTerm: anypoint.averageRating
+        range: float
+        # mutable
+      numberOfRatings:
+        propertyTerm: anypoint.numberOfRatings
+        range: integer
+        # mutable
+      createdAt:
+        propertyTerm: schema-org.dateCreated
+        range: date
+        mandatory: true
+        # immutable
+
+  FileNode:
+    classTerm: digital-repo.File
+    mapping:
+      classifier:
+        propertyTerm: digital-repo.classifier
+        range: string
+        enum:
+          - TODO # add constraints here
+          - raml
+          - oas
+        mandatory: true
+        # immutable
+      packaging:
+        propertyTerm: digital-repo.packaging
+        range: string
+        mandatory: true
+        # immutable
+      mainFile:
+        propertyTerm: digital-repo.mainFile
+        range: uri
+        # immutable
+      size:
+        propertyTerm: schema-org.fileSize
+        range: float
+        # immutable
+      isGenerated:
+        propertyTerm: digital-repo.isGenerated
+        range: boolean
+        mandatory: true
+        # immutable
+      createdAt: # Will be in the FileNode because right now icons are added as icons after the release is created
+        propertyTerm: schema-org.dateCreated
+        range: date
+        mandatory: true
+        # immutable
+
+documents:
+  root:
+    encodes: AssetUnionNode
+  fragments:
+    Documentation: DocumentationNode

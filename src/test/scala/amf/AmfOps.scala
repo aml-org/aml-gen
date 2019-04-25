@@ -2,6 +2,7 @@ package amf
 import amf.core.AMFSerializer
 import amf.core.emitter.RenderOptions
 import amf.core.model.document.BaseUnit
+import amf.core.parser.UnhandledErrorHandler
 import amf.core.remote._
 import amf.core.services.{RuntimeCompiler, RuntimeValidator}
 import amf.core.unsafe.PlatformSecrets
@@ -29,7 +30,7 @@ trait AmfOps extends PlatformSecrets {
       result <- RuntimeValidator(unit, ProfileName(dialect))
     } yield {
       if (!result.conforms) throw new IllegalStateException(result.toString())
-      unit
+      AMLPlugin.resolve(unit, UnhandledErrorHandler)
     }
   }
 

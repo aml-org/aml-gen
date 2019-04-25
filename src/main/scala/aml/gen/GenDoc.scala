@@ -17,7 +17,7 @@ import scala.collection.mutable
 
 case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables) {
 
-  private val genDate        = Gen.chooseNum(-2208988800000L, 32503680000000L) map { new Date(_) }
+  private val genDate        = Gen.chooseNum(0L, 12503680000000L) map { new Date(_) }
   private val datetimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
   private val dateFormat     = new SimpleDateFormat("yyyy-MM-dd")
 
@@ -41,8 +41,25 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables) {
     case u: UnionNodeMapping => unionNode(u)
   }
 
+  def unionDiscriminator(discriminators: Map[String, String],
+                         key: String,
+                         node: NodeMappable,
+                         gen: Gen[YMap]): Gen[YMap] = {
+    val value = discriminators.map(_.swap).get(node.id)
+    value.map(v => gen.map(m => YMap(m.entries :+ YMapEntry(key, v), ""))).getOrElse(gen)
+  }
+
   private def unionNode(union: UnionNodeMapping): Gen[YMap] = {
-    val gen = Gen.oneOf(union.objectRange().map(o => mappings(o.value()))).flatMap(node)
+    val gen = Gen
+      .oneOf(union.objectRange().map(o => mappings(o.value())))
+      .flatMap(n => {
+        val ng = nodes.getOrElse(n.id, node(n))
+        union
+          .typeDiscriminatorName()
+          .option()
+          .map(unionDiscriminator(union.typeDiscriminator(), _, n, ng))
+          .getOrElse(ng)
+      })
     nodes.put(union.id, gen)
     gen
   }
@@ -68,21 +85,65 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables) {
 
   private def literal(range: String, property: PropertyMapping): Gen[Option[YNode]] = {
     optional(property) {
-      multiple(property) {
-        range match {
-          case v if (Xsd + "boolean").iri() == v  => boolean(property)
-          case v if (Xsd + "integer").iri() == v  => integer(property)
-          case v if (Xsd + "string").iri() == v   => string(property)
-          case v if (Xsd + "float").iri() == v    => double(property)
-          case v if (Xsd + "double").iri() == v   => double(property)
-          case v if (Shapes + "link").iri() == v  => link(property)
-          case v if (Xsd + "anyUri").iri() == v   => link(property)
-          case v if (Xsd + "date").iri() == v     => date(property)
-          case v if (Xsd + "dateTime").iri() == v => datetime(property)
-          case _                                  => string(property)
+      enum(property) {
+        multiple(property) {
+          range match {
+            case v if (Xsd + "boolean").iri() == v  => boolean(property)
+            case v if (Xsd + "integer").iri() == v  => integer(property)
+            case v if (Xsd + "string").iri() == v   => string(property)
+            case v if (Xsd + "float").iri() == v    => double(property)
+            case v if (Xsd + "double").iri() == v   => double(property)
+            case v if (Xsd + "anyUri").iri() == v   => link(property)
+            case v if (Xsd + "date").iri() == v     => date(property)
+            case v if (Xsd + "dateTime").iri() == v => datetime(property)
+            case v if (Shapes + "link").iri() == v  => link(property)
+            case _                                  => string(property)
+          }
         }
       }
     }
+  }
+
+  private def enum(property: PropertyMapping)(g: Gen[YNode]): Gen[YNode] = {
+    if (property.enum().nonEmpty) {
+      val fn = cast(property.literalRange().value())
+      Gen.oneOf(property.enum().map(element => fn(element.value())))
+    } else { g }
+  }
+
+  private def cast(range: String): Any => YNode = {
+    range match {
+      case v if (Xsd + "boolean").iri() == v => {
+        case bool: Boolean => YNode.fromBool(bool)
+      }
+      case v if (Xsd + "integer").iri() == v => {
+        case int: Int    => YNode.fromInt(int)
+        case num: Number => YNode.fromInt(num.intValue())
+      }
+      case v if ((Xsd + "string").iri() == v) || ((Shapes + "link").iri() == v) || ((Xsd + "anyUri").iri() == v) => {
+        case str: String => YNode.fromString(str)
+      }
+      case v if ((Xsd + "double").iri() == v) || ((Xsd + "float").iri() == v) => {
+        case d: Double => YNode.fromDouble(d)
+      }
+      case v if (Xsd + "date").iri() == v =>
+        any =>
+          castDate(any, dateFormat)
+      case v if (Xsd + "dateTime").iri() == v =>
+        any =>
+          castDate(any, datetimeFormat)
+      case _ => {
+        case str: String => YNode.fromString(str)
+      }
+    }
+  }
+
+  private def castDate(value: Any, formatter: SimpleDateFormat): YNode = {
+    val scalar = value match {
+      case l: Long     => YScalar(formatter.format(new Date(l)))
+      case str: String => YScalar(formatter.format(formatter.parse(str)))
+    }
+    YNode(scalar, YType.Timestamp.tag, sourceName = scalar.sourceName)
   }
 
   private def obj(property: PropertyMapping): Gen[Option[YNode]] = {
@@ -144,16 +205,16 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables) {
       .map(YNode.fromDouble)
   }
 
-  private def string(property: PropertyMapping): Gen[YNode] = {
-    val patternValue = property.pattern().option()
-    val stringGen    = patternValue.map(RegexpGen.from).getOrElse(Gen.alphaStr)
-    stringGen.map(YNode.fromString)
-  }
-
   private def integer(property: PropertyMapping): Gen[YNode] = {
     val minValue = property.minimum().option().map(_.toInt)
     val maxValue = property.maximum().option().map(_.toInt)
     Gen.chooseNum[Int](minValue.getOrElse(Int.MinValue), maxValue.getOrElse(Int.MaxValue)).map(YNode.fromInt)
+  }
+
+  private def string(property: PropertyMapping): Gen[YNode] = {
+    val patternValue = property.pattern().option()
+    val stringGen    = patternValue.map(RegexpGen.from).getOrElse(Gen.alphaStr)
+    stringGen.map(YNode.fromString)
   }
 
   private def boolean(property: PropertyMapping): Gen[YNode] = {
@@ -162,7 +223,8 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables) {
 
   private def multiple(property: PropertyMapping)(g: Gen[YNode]): Gen[YNode] = {
     if (property.allowMultiple().value()) {
-      val gen = if (property.minCount().value() != 0) Gen.nonEmptyListOf(g) else Gen.listOf(g)
+      val min = if (property.minCount().value() != 0) 1 else 0
+      val gen = Gen.choose(min, 10).flatMap(Gen.listOfN(_, g))
       property
         .mapKeyProperty()
         .option()
