@@ -161,23 +161,37 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables) {
     val m = property
       .mapKeyProperty()
       .option()
-      .flatMap(mapKey(mappable, map, _))
+      .flatMap(mapKey(mappable, map, _, property.mapValueProperty().option()))
       .getOrElse(map)
     YNode.fromMap(m)
   }
 
-  private def mapKey(mappable: NodeMappable, map: YMap, key: String): Option[YMap] = {
+  private def findPropInMappable(mappable: NodeMappable, key: String) = {
     mappable
       .asInstanceOf[NodeMapping]
       .propertiesMapping()
       .find(_.nodePropertyMapping().value() == key)
+  }
+
+  private def mapKey(mappable: NodeMappable, map: YMap, key: String, mvProperty: Option[String]): Option[YMap] = {
+    findPropInMappable(mappable, key)
       .map(k => {
         val id = k.name().value()
         map.entries.partition(_.key.as[String] == id) match {
           case (keys, rest) =>
-            YMap(IndexedSeq(YMapEntry(keys.head.value, YMap(rest, ""))), "")
+            val mapKeyRestNode = mapValue(mappable, map, mvProperty).getOrElse(YNode.fromMap(YMap(rest, "")))
+            YMap(IndexedSeq(YMapEntry(keys.head.value, mapKeyRestNode)), "")
         }
       })
+  }
+
+  private def mapValue(mappable: NodeMappable, map: YMap, mapValue: Option[String]): Option[YNode] = {
+    mapValue.flatMap(
+      findPropInMappable(mappable, _)
+        .flatMap(mvk => {
+          val mvID = mvk.name().value()
+          map.entries.find(_.key.as[String] == mvID).map(_.value)
+        }))
   }
 
   private def date(property: PropertyMapping): Gen[YNode] =

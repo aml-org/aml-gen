@@ -1,0 +1,33 @@
+#%Dialect 1.0
+
+dialect: Map Value
+version: 1.12
+
+nodeMappings:
+  A:
+    classTerm: tmp.A
+    mapping:
+      a:
+        propertyTerm: tmp.a
+        range: string
+        mandatory: true
+      c:
+        propertyTerm: tmp.c
+        range: string
+        mandatory: true
+
+  RootNode:
+    classTerm: tmp.Test
+    mapping:
+      as:
+        propertyTerm: tmp.as
+        mapKey: tmp.a
+        mapValue: tmp.c
+        range: A
+
+documents:
+  root:
+    encodes: RootNode
+
+external:
+  tmp: http://test.com/tmp#
