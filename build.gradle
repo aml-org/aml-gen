@@ -68,48 +68,27 @@ apply plugin: 'com.github.maiflai.scalatest'
 apply plugin: 'application'
 apply plugin: 'idea'
 apply plugin: 'org.scoverage'
-apply plugin: 'com.mulesoft.gradle.sonar'
-apply plugin: 'com.mulesoft.gradle.jvmService'
 
-if(System.env.SONAR_USR != null) {
-    sonar.url = "${System.env.SONAR_USR}"
-    sonar.login = "${System.env.SONAR_PSW}"
-    sonar.projectKey = "mulesoft.knowledge-graph-service"
-    sonar.sources = "src/main/scala"
-}
-
-newRelic.enabled = true
 description = "AML Document Generator"
-mainClassName = ''
+mainClassName = 'aml.gen.GenDoc'
 group = "com.mulesoft.ang-dg"
-ospackage_application.prefix = "/usr/src/app"
-
-def major = 0
-def minor = 0
-def patch = System.getenv("BUILD_NUMBER")
-
-version = patch != null ? (major + "." + minor + "." + patch) : (major + "." + (minor+1) + ".0-SNAPSHOT")
 
 ext {
-    akkaCommonCore =  'com.mulesoft.akka.common:common-core:0.1.16'
-    akkaCommonTest = 'com.mulesoft.akka.common:common-test:0.1.16'
     scalaTest = 'org.scalatest:scalatest_2.12:3.0.5'
-    akkaActor = 'com.typesafe.akka:akka-actor_2.12:2.4.18'
+    pegdown = 'org.pegdown:pegdown:1.6.0'
 }
 
 dependencies {
     
     // https://mvnrepository.com/artifact/wolfendale/scalacheck-gen-regexp
     compile group: 'wolfendale', name: 'scalacheck-gen-regexp_2.12', version: '0.1.1'
+    compile group: 'com.github.amlorg', name: 'amf-validation_2.12', version: amfVersion
+    compile group: 'org.scalacheck', name: 'scalacheck_2.12', version: '1.14.0'
 
     testCompile scalaTest
-    testCompile akkaCommonTest
+    testRuntime pegdown
 
     scoverage 'org.scoverage:scalac-scoverage-plugin_2.12:1.3.0', 'org.scoverage:scalac-scoverage-runtime_2.12:1.3.0'
-
-    compile (group: 'com.github.amlorg', name: 'amf-validation_2.12', version: amfVersion)
-    compile group: 'org.scalacheck', name: 'scalacheck_2.12', version: '1.14.0'
-    compile group: 'org.scala-lang', name: 'scala-library', version: '2.12.0'
 }
 
 test {
@@ -130,17 +109,11 @@ tasks.withType(ScalaCompile) {
     scalaCompileOptions.additionalParameters = ["-Ypatmat-exhaust-depth", "off"]
 }
 
-tasks.withType(ScalaCompile) {
-    scalaCompileOptions.additionalParameters = ["-Ypatmat-exhaust-depth", "off"]
-}
-
 run {
     if (project.hasProperty("appArgs")) {
         args Eval.me(appArgs)
     }
 }
-
-apply plugin: 'idea'
 
 configurations {
     ideaPlugins
@@ -149,14 +122,12 @@ configurations {
 test {
     gradle.taskGraph.whenReady { graph ->
         enabled !graph.hasTask(':checkScoverage')
-        workingDir(project.buildDir)
+        workingDir(project.rootDir)
     }
 }
 
 testScoverage {
-    workingDir(project.buildDir)
+    workingDir(project.rootDir)
 }
 
 build.dependsOn(checkScoverage)
-
-tasks.sonarqube.dependsOn(checkScoverage)

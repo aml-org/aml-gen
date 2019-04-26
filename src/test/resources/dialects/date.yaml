@@ -1,0 +1,20 @@
+#%Dialect 1.0
+
+dialect: Date
+version: 1.0
+
+nodeMappings:
+  RootNode:
+    classTerm: tmp.Root
+    mapping:
+      dates:
+        propertyTerm: tmp.date
+        range: dateTime
+        mandatory: true
+        allowMultiple: true
+
+documents:
+  root:
+    encodes: RootNode
+external:
+  tmp: http://test.com/tmp#
