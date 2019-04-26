@@ -8,6 +8,7 @@ import amf.core.vocabulary.Namespace.{Shapes, Xsd}
 import amf.plugins.document.vocabularies.model.document.{Dialect, DialectLibrary}
 import amf.plugins.document.vocabularies.model.domain.{NodeMappable, NodeMapping, PropertyMapping, UnionNodeMapping}
 import aml.gen.GenDoc.{NodeGenerators, NodeMappables}
+import org.mulesoft.common.time.SimpleDateTime
 import org.scalacheck.Gen.{const, frequency, some}
 import org.scalacheck.{Arbitrary, Gen}
 import org.yaml.model._
@@ -85,8 +86,8 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables) {
 
   private def literal(range: String, property: PropertyMapping): Gen[Option[YNode]] = {
     optional(property) {
-      enum(property) {
-        multiple(property) {
+      multiple(property) {
+        enum(property) {
           range match {
             case v if (Xsd + "boolean").iri() == v  => boolean(property)
             case v if (Xsd + "integer").iri() == v  => integer(property)
@@ -140,8 +141,8 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables) {
 
   private def castDate(value: Any, formatter: SimpleDateFormat): YNode = {
     val scalar = value match {
-      case l: Long     => YScalar(formatter.format(new Date(l)))
-      case str: String => YScalar(formatter.format(formatter.parse(str)))
+      case str: String       => YScalar(formatter.format(formatter.parse(str)))
+      case d: SimpleDateTime => YScalar(formatter.format(d.toDate))
     }
     YNode(scalar, YType.Timestamp.tag, sourceName = scalar.sourceName)
   }

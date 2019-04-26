@@ -9,9 +9,13 @@ nodeMappings:
     mapping:
       dates:
         propertyTerm: tmp.date
-        range: dateTime
+        range: date
         mandatory: true
         allowMultiple: true
+        enum:
+          - 2036-02-29
+          - 2033-04-29
+          - 1994-10-11
 
 documents:
   root:
