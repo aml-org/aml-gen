@@ -13,8 +13,11 @@ import scala.concurrent.duration._
 
 class GenDocSpec extends AsyncFlatSpec with Matchers with AmfOps with GeneratorDrivenPropertyChecks {
 
-  private val file     = System.getProperty("yaml")
-  private val dialects = if (file != null) Array(file) else files("src/test/resources/dialects")
+  private val file = System.getProperty("yaml")
+  private val dialects =
+    if (file != null) Array(file)
+    else
+      files("src/test/resources/dialects").filter(f => f != "union-library.yaml" && f != "date.yaml")
 
   dialects.foreach { file =>
     "GenDoc" should s"create a Gen[YDocument] for $file" in {
