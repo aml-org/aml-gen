@@ -142,7 +142,7 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables) {
   private def castDate(value: Any, formatter: SimpleDateFormat): YNode = {
     val scalar = value match {
       case str: String       => YScalar(formatter.format(formatter.parse(str)))
-      case d: SimpleDateTime => YScalar(formatter.format(d.toDate))
+      case d: SimpleDateTime => YScalar(formatter.format(formatter.parse(d.toZonedDateTime.toString)))
     }
     YNode(scalar, YType.Timestamp.tag, sourceName = scalar.sourceName)
   }
