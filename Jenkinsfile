@@ -25,7 +25,7 @@ pipeline {
         }
       }
       steps {
-        sh './gradlew build sonarqube -Pversion=${VERSION}'
+        sh './gradlew build'
       }
     }
 
@@ -42,9 +42,9 @@ pipeline {
          }
        }
        steps {
-         slackSend color: 'good', channel: "#ang-bot", message: ":nexus: publishing `aml-gen` <${env.BUILD_URL}|${currentBuild.displayName}> to nexus... brace yourselves."
+         slackSend color: 'good', channel: "#ang-bot", message: ":nexus: publishing `aml-gen` to nexus... brace yourselves."
          sh './gradlew publish'
-         slackSend color: 'good', channel: "#ang-bot", message: ":rocket: `aml-gen` version <${env.BUILD_URL}|${currentBuild.displayName}> published to Nexus."
+         slackSend color: 'good', channel: "#ang-bot", message: ":rocket: `aml-gen` new version published to Nexus."
        }
     }
   }
