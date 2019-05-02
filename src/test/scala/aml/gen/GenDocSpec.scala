@@ -3,6 +3,8 @@ package aml.gen
 import amf.AmfOps
 import amf.plugins.document.vocabularies.model.document.Dialect
 import org.mulesoft.common.io.Fs
+import org.scalacheck.Gen.Parameters
+import org.scalacheck.rng.Seed
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{Assertion, AsyncFlatSpec, Matchers}
 import org.yaml.model.YDocument
@@ -17,7 +19,7 @@ class GenDocSpec extends AsyncFlatSpec with Matchers with AmfOps with GeneratorD
   private val dialects =
     if (file != null) Array(file)
     else
-      files("src/test/resources/dialects").filter(f => f != "union-library.yaml" && f != "date.yaml")
+      files("src/test/resources/dialects").filter(!_.endsWith("ignored"))
 
   dialects.foreach { file =>
     "GenDoc" should s"create a Gen[YDocument] for $file" in {
@@ -42,5 +44,5 @@ class GenDocSpec extends AsyncFlatSpec with Matchers with AmfOps with GeneratorD
 
   private def parse(dialect: String) = parseAml(s"file://$dialect", "Dialect 1.0").mapTo[Dialect]
 
-  private def files(directory: String) = Fs.syncFile(directory).list.filter(_.endsWith(".yaml"))
+  private def files(directory: String) = Fs.syncFile(directory).list.filter(_.contains(".yaml"))
 }
