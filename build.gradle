@@ -28,6 +28,7 @@ buildscript {
     classpath "gradle.plugin.com.hierynomus.gradle.plugins:scalariform-gradle-plugin:0.2.0"
     classpath "gradle.plugin.com.github.maiflai:gradle-scalatest:0.22"
     classpath "gradle.plugin.org.scoverage:gradle-scoverage:2.1.0"
+    classpath "com.mulesoft:gradle-tools:0.2.22"
   }
 }
 
@@ -66,12 +67,28 @@ apply plugin: 'com.github.maiflai.scalatest'
 apply plugin: 'application'
 apply plugin: 'idea'
 apply plugin: 'org.scoverage'
+//for publishing
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
+//for coverage
+apply plugin: 'org.scoverage'
+apply plugin: 'com.mulesoft.gradle.sonar'
 
 description = "AML Document Generator"
 mainClassName = 'aml.gen.GenDoc'
 group = "com.github.amlorg"
+
+sonar.url = "${System.env.SONAR_USR}"
+sonar.login = "${System.env.SONAR_PSW}"
+sonar.sources = "src/main/scala"
+sonar.projectKey = "mulesoft.aml-gen"
+sonar.language="scala"
+sonar.tests="src/test"
+sonar.githubRepository="aml-org/aml-gen"
+sonar.exclusions="src/test/**"
+sonar.javaBinaries="build/classes"
+sonar.javaSource="1.8%"
+sonar.scalaCoverageReportPaths="build/reports/scoverage/scoverage.xml"
 
 ext {
   scalaTest = 'org.scalatest:scalatest_2.12:3.0.5'
@@ -125,6 +142,8 @@ testScoverage {
 }
 
 build.dependsOn(checkScoverage)
+
+tasks.sonarqube.dependsOn(checkScoverage)
 
 // ------ Publishing -------
 task sourcesJar(type: Jar, dependsOn: classes) {
