@@ -1,10 +1,8 @@
 package aml.gen
 
-import amf.AmfOps
 import amf.plugins.document.vocabularies.model.document.Dialect
+import aml.amf.AmfOps
 import org.mulesoft.common.io.Fs
-import org.scalacheck.Gen.Parameters
-import org.scalacheck.rng.Seed
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{Assertion, AsyncFlatSpec, Matchers}
 import org.yaml.model.YDocument
@@ -15,7 +13,8 @@ import scala.concurrent.duration._
 
 class GenDocSpec extends AsyncFlatSpec with Matchers with AmfOps with GeneratorDrivenPropertyChecks {
 
-  private val file = System.getProperty("yaml")
+  implicit override val generatorDrivenConfig = PropertyCheckConfig(minSize = 0, maxSize = 5)
+  private val file                            = System.getProperty("yaml")
   private val dialects =
     if (file != null) Array(file)
     else

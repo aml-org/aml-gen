@@ -1,4 +1,6 @@
-package amf
+package aml.amf
+
+import amf.{Core, ProfileName}
 import amf.core.AMFSerializer
 import amf.core.emitter.RenderOptions
 import amf.core.model.document.BaseUnit

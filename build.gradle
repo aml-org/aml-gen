@@ -61,6 +61,8 @@ repositories {
 }
 
 apply plugin: 'scala'
+apply plugin: 'java'
+apply plugin: 'distribution'
 apply plugin: 'net.linguica.maven-settings'
 apply plugin: 'com.github.hierynomus.scalariform'
 apply plugin: 'com.github.maiflai.scalatest'
@@ -74,21 +76,22 @@ apply plugin: 'maven-publish'
 apply plugin: 'org.scoverage'
 apply plugin: 'com.mulesoft.gradle.sonar'
 
+applicationName = 'AML-gen'
 description = "AML Document Generator"
-mainClassName = 'aml.gen.GenDoc'
+mainClassName = 'aml.gen.Main'
 group = "com.github.amlorg"
 
 sonar.url = "${System.env.SONAR_USR}"
 sonar.login = "${System.env.SONAR_PSW}"
 sonar.sources = "src/main/scala"
 sonar.projectKey = "mulesoft.aml-gen"
-sonar.language="scala"
-sonar.tests="src/test"
-sonar.githubRepository="aml-org/aml-gen"
-sonar.exclusions="src/test/**"
-sonar.javaBinaries="build/classes"
-sonar.javaSource="1.8%"
-sonar.scalaCoverageReportPaths="build/reports/scoverage/scoverage.xml"
+sonar.language = "scala"
+sonar.tests = "src/test"
+sonar.githubRepository = "aml-org/aml-gen"
+sonar.exclusions = "src/test/**"
+sonar.javaBinaries = "build/classes"
+sonar.javaSource = "1.8%"
+sonar.scalaCoverageReportPaths = "build/reports/scoverage/scoverage.xml"
 
 ext {
   scalaTest = 'org.scalatest:scalatest_2.12:3.0.5'
@@ -99,6 +102,8 @@ dependencies {
 
   // https://mvnrepository.com/artifact/wolfendale/scalacheck-gen-regexp
   compile group: 'wolfendale', name: 'scalacheck-gen-regexp_2.12', version: '0.1.1'
+  // https://mvnrepository.com/artifact/com.github.scopt/scopt
+  compile group: 'com.github.scopt', name: 'scopt_2.12', version: '3.7.1'
   compile group: 'com.github.amlorg', name: 'amf-validation_2.12', version: amfVersion
   compile group: 'org.scalacheck', name: 'scalacheck_2.12', version: '1.14.0'
 
@@ -142,6 +147,7 @@ testScoverage {
 }
 
 build.dependsOn(checkScoverage)
+publish.dependsOn(distZip)
 
 tasks.sonarqube.dependsOn(checkScoverage)
 
@@ -163,6 +169,7 @@ publishing {
       from components.java
       artifact sourcesJar
       artifact javadocJar
+      artifact distZip
     }
   }
   repositories {

@@ -1,5 +1,6 @@
-package amf
-import amf.YDocumentResourceLoader.uri
+package aml.amf
+
+import YDocumentResourceLoader.uri
 import amf.client.remote.Content
 import amf.core.lexer.CharSequenceStream
 import amf.internal.resource.ResourceLoader

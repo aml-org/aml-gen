@@ -238,8 +238,7 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables) {
 
   private def multiple(property: PropertyMapping)(g: Gen[YNode]): Gen[YNode] = {
     if (property.allowMultiple().value()) {
-      val min = if (property.minCount().value() != 0) 1 else 0
-      val gen = Gen.choose(min, 10).flatMap(Gen.listOfN(_, g))
+      val gen = if (property.minCount().value() != 0) Gen.nonEmptyListOf(g) else Gen.listOf(g)
       property
         .mapKeyProperty()
         .option()
