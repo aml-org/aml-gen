@@ -76,7 +76,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'org.scoverage'
 apply plugin: 'com.mulesoft.gradle.sonar'
 
-applicationName = 'AML-gen'
+applicationName = 'amlgen'
 description = "AML Document Generator"
 mainClassName = 'aml.gen.Main'
 group = "com.github.amlorg"
