@@ -6,6 +6,8 @@ Provided a valid AML dialect, this generator can automatically create a set of e
 The generator can be potentially customised to generate more semantically accurate values that not only matches the contraints
 in the dialect but provide a better set of examples for a human reader.
 
+## Command line usage
+
 #### Installation
 
 * [Download the latest release (.zip file)](https://repository-master.mulesoft.org/nexus/content/repositories/releases/com/github/amlorg/aml-gen_2.12/) 
