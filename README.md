@@ -1,7 +1,5 @@
 # AML-GEN
 
-## Command line usage
-
 Automatic generator of examples for AML dialects.
 
 Provided a valid AML dialect, this generator can automatically create a set of examples that validates the dialect.
