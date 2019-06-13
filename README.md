@@ -1,5 +1,11 @@
 # AML-GEN
 
+Automatic generator of examples for AML dialects.
+
+Provided a valid AML dialect, this generator can automatically create a set of examples that validates the dialect.
+The generator can be potentially customised to generate more semantically accurate values that not only matches the contraints
+in the dialect but provide a better set of examples for a human reader.
+
 ## Command line usage
 
 #### Installation
