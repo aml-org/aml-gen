@@ -18,12 +18,14 @@ nodeMappings:
         range: string
         mandatory: true
         unique: true
+        pattern: "[0-9a-fA-F]{8,8}-[0-9a-fA-F]{4,4}-[0-9a-fA-F]{4,4}-[0-9a-fA-F]{4,4}-[0-9a-fA-F]{12,12}"
         # immutable
       assetId:
         propertyTerm: digital-repo.assetId
         range: string
         mandatory: true
         unique: true
+        pattern: "[0-9a-fA-F]{8,8}-[0-9a-fA-F]{4,4}-[0-9a-fA-F]{4,4}-[0-9a-fA-F]{4,4}-[0-9a-fA-F]{12,12}"
         # immutable
       name:
         propertyTerm: schema-org.name
@@ -34,6 +36,7 @@ nodeMappings:
         propertyTerm: schema-org.description
         range: string
         mandatory: false
+        pattern: "[a-zA-Z0-9]{400,500}"
         # mutable
       createdAt:
         propertyTerm: schema-org.dateCreated

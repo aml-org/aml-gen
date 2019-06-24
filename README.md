@@ -47,12 +47,12 @@ The following example will generate 5 dialect instances files given the dialect.
 <dependency>
     <groupId>com.github.amlorg</groupId>
     <artifactId>aml-gen_2.12</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
 ###### Gradle
-`compile group: 'com.github.amlorg', name: 'aml-gen_2.12', version: '1.0.0'`
+`compile group: 'com.github.amlorg', name: 'aml-gen_2.12', version: '1.0.1'`
 
 ###### SBT
-`libraryDependencies += "com.github.amlorg" %% "aml-gen_2.12" % "1.0.0"`
+`libraryDependencies += "com.github.amlorg" %% "aml-gen_2.12" % "1.0.1"`
