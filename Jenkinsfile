@@ -41,10 +41,13 @@ pipeline {
            branch 'master'  //only run these steps on the master branch
          }
        }
+       environment {
+         GEN_VERSION = sh(script: 'grep -F "version=" ./gradle.properties | sed \'s/version=//g\'', , returnStdout: true).trim()
+       }
        steps {
-         slackSend color: 'good', channel: "#ang-bot", message: ":nexus: publishing `aml-gen` to nexus... brace yourselves."
+         slackSend color: 'good', channel: "#ang-bot", message: ":nexus: publishing `aml-gen` <${env.BUILD_URL}|${env.GEN_VERSION}> to nexus... brace yourselves."
          sh './gradlew publish'
-         slackSend color: 'good', channel: "#ang-bot", message: ":rocket: `aml-gen` new version published to Nexus."
+         slackSend color: 'good', channel: "#ang-bot", message: ":rocket: `aml-gen` <${env.BUILD_URL}|${env.GEN_VERSION}> new version published to Nexus."
        }
     }
   }
