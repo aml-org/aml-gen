@@ -8,6 +8,7 @@ import amf.core.vocabulary.Namespace.{Shapes, Xsd}
 import amf.plugins.document.vocabularies.model.document.{Dialect, DialectLibrary}
 import amf.plugins.document.vocabularies.model.domain.{NodeMappable, NodeMapping, PropertyMapping, UnionNodeMapping}
 import aml.gen.GenDoc.{NodeGenerators, NodeMappables}
+import aml.gen.context.{EmptyGenContext, GenContext}
 import org.mulesoft.common.time.SimpleDateTime
 import org.scalacheck.Gen.{const, frequency, some}
 import org.scalacheck.{Arbitrary, Gen}
@@ -16,7 +17,7 @@ import wolfendale.scalacheck.regexp.RegexpGen
 
 import scala.collection.mutable
 
-case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables) {
+case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables, context: GenContext) {
 
   private val genDate        = Gen.chooseNum(0L, 12503680000000L) map { new Date(_) }
   private val datetimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
@@ -87,18 +88,20 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables) {
   private def literal(range: String, property: PropertyMapping): Gen[Option[YNode]] = {
     optional(property) {
       multiple(property) {
-        enum(property) {
-          range match {
-            case v if (Xsd + "boolean").iri() == v  => boolean(property)
-            case v if (Xsd + "integer").iri() == v  => integer(property)
-            case v if (Xsd + "string").iri() == v   => string(property)
-            case v if (Xsd + "float").iri() == v    => double(property)
-            case v if (Xsd + "double").iri() == v   => double(property)
-            case v if (Xsd + "anyUri").iri() == v   => link(property)
-            case v if (Xsd + "date").iri() == v     => date(property)
-            case v if (Xsd + "dateTime").iri() == v => datetime(property)
-            case v if (Shapes + "link").iri() == v  => link(property)
-            case _                                  => string(property)
+        custom(property) {
+          enum(property) {
+            range match {
+              case v if (Xsd + "boolean").iri() == v  => boolean(property)
+              case v if (Xsd + "integer").iri() == v  => integer(property)
+              case v if (Xsd + "string").iri() == v   => string(property)
+              case v if (Xsd + "float").iri() == v    => double(property)
+              case v if (Xsd + "double").iri() == v   => double(property)
+              case v if (Xsd + "anyUri").iri() == v   => link(property)
+              case v if (Xsd + "date").iri() == v     => date(property)
+              case v if (Xsd + "dateTime").iri() == v => datetime(property)
+              case v if (Shapes + "link").iri() == v  => link(property)
+              case _                                  => string(property)
+            }
           }
         }
       }
@@ -111,6 +114,8 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables) {
       Gen.oneOf(property.enum().map(element => fn(element.value())))
     } else { g }
   }
+
+  private def custom(property: PropertyMapping)(g: Gen[YNode]): Gen[YNode] = context.lit(property).getOrElse(g)
 
   private def cast(range: String): Any => YNode = {
     range match {
@@ -283,7 +288,7 @@ object GenDoc {
 
   type NodeMappables = mutable.Map[String, NodeMappable]
 
-  def doc(dialect: Dialect): Gen[YDocument] = {
+  def doc(dialect: Dialect, context: GenContext = EmptyGenContext): Gen[YDocument] = {
 
     val mappings: NodeMappables = mutable.Map()
 
@@ -300,6 +305,6 @@ object GenDoc {
 
     collect(dialect.declares)
 
-    GenDoc(mutable.Map(), mappings).gen(dialect)
+    GenDoc(mutable.Map(), mappings, context).gen(dialect)
   }
 }

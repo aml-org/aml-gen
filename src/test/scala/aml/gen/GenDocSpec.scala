@@ -14,8 +14,9 @@ import scala.concurrent.duration._
 
 class GenDocSpec extends AsyncFlatSpec with Matchers with AmfOps with GeneratorDrivenPropertyChecks {
 
-  implicit override val generatorDrivenConfig = PropertyCheckConfiguration(sizeRange = PosZInt(5))
-  private val file                            = System.getProperty("yaml")
+  implicit override val generatorDrivenConfig: PropertyCheckConfiguration = PropertyCheckConfiguration(
+    sizeRange = PosZInt(5))
+  private val file = System.getProperty("yaml")
   private val dialects =
     if (file != null) Array(file)
     else
