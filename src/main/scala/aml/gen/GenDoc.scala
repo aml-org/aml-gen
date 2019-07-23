@@ -7,7 +7,7 @@ import amf.core.model.domain.DomainElement
 import amf.core.vocabulary.Namespace.{Shapes, Xsd}
 import amf.plugins.document.vocabularies.model.document.{Dialect, DialectLibrary}
 import amf.plugins.document.vocabularies.model.domain.{NodeMappable, NodeMapping, PropertyMapping, UnionNodeMapping}
-import aml.gen.GenDoc.{NodeGenerators, NodeMappables}
+import aml.gen.GenDoc.{NodeGenerators, NodeMappables, multiple, optional}
 import aml.gen.context.{EmptyGenContext, GenContext}
 import org.mulesoft.common.time.SimpleDateTime
 import org.scalacheck.Gen.{const, frequency, some}
@@ -87,8 +87,8 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables, conte
 
   private def literal(range: String, property: PropertyMapping): Gen[Option[YNode]] = {
     optional(property) {
-      multiple(property) {
-        custom(property) {
+      custom(property) {
+        multiple(property) {
           enum(property) {
             range match {
               case v if (Xsd + "boolean").iri() == v  => boolean(property)
@@ -240,46 +240,6 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables, conte
   private def boolean(property: PropertyMapping): Gen[YNode] = {
     Arbitrary.arbBool.arbitrary.map(YNode.fromBool)
   }
-
-  private def multiple(property: PropertyMapping)(g: Gen[YNode]): Gen[YNode] = {
-    if (property.allowMultiple().value()) {
-      val gen = if (property.minCount().value() != 0) Gen.nonEmptyListOf(g) else Gen.listOf(g)
-      property
-        .mapKeyProperty()
-        .option()
-        .map { _ =>
-          gen.map(sequenceToObj).filter(mapKeyUniqueness)
-        }
-        .getOrElse {
-          gen.map(nodes => YNode.fromSeq(YSequence.apply(nodes: _*)))
-        }
-    } else {
-      g
-    }
-  }
-
-  private def mapKeyUniqueness(node: YNode): Boolean = {
-    val keys = node.as[YMap].entries.map(_.key.as[String]).toList
-    keys.distinct.size == keys.size
-  }
-
-  /** Transforms a list of YMaps to a single YMaps having each map as a entry of it */
-  private def sequenceToObj(nodes: List[YNode]): YNode = {
-    val entries = nodes
-      .map(_.value)
-      .collect {
-        case m: YMap => m.entries
-      }
-      .flatten
-    YNode.fromMap(YMap(IndexedSeq(entries: _*), ""))
-  }
-
-  private def optional[T](property: PropertyMapping)(g: Gen[T]): Gen[Option[T]] = {
-    property.minCount().value() match {
-      case 0 => frequency(5 -> const(None), 5 -> some(g))
-      case _ => some(g)
-    }
-  }
 }
 
 object GenDoc {
@@ -307,4 +267,47 @@ object GenDoc {
 
     GenDoc(mutable.Map(), mappings, context).gen(dialect)
   }
+
+  /** Gen[YNode] to multiple if defined by PropertyMapping. */
+  def multiple(property: PropertyMapping)(g: Gen[YNode]): Gen[YNode] = {
+    if (property.allowMultiple().value()) {
+      val gen = if (property.minCount().value() != 0) Gen.nonEmptyListOf(g) else Gen.listOf(g)
+      property
+        .mapKeyProperty()
+        .option()
+        .map { _ =>
+          gen.map(sequenceToObj).filter(mapKeyUniqueness)
+        }
+        .getOrElse {
+          gen.map(nodes => YNode.fromSeq(YSequence.apply(nodes: _*)))
+        }
+    } else {
+      g
+    }
+  }
+
+  /** Gen[YNode] to optional if defined by PropertyMapping. */
+  def optional[T](property: PropertyMapping)(g: Gen[T]): Gen[Option[T]] = {
+    property.minCount().value() match {
+      case 0 => frequency(5 -> const(None), 5 -> some(g))
+      case _ => some(g)
+    }
+  }
+
+  /** Transforms a list of YMaps to a single YMaps having each map as a entry of it */
+  private def sequenceToObj(nodes: List[YNode]): YNode = {
+    val entries = nodes
+      .map(_.value)
+      .collect {
+        case m: YMap => m.entries
+      }
+      .flatten
+    YNode.fromMap(YMap(IndexedSeq(entries: _*), ""))
+  }
+
+  private def mapKeyUniqueness(node: YNode): Boolean = {
+    val keys = node.as[YMap].entries.map(_.key.as[String]).toList
+    keys.distinct.size == keys.size
+  }
+
 }
