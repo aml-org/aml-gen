@@ -4,12 +4,12 @@ import amf.core.vocabulary.Namespace.XsdTypes
 import amf.plugins.document.vocabularies.model.document.Dialect
 import amf.plugins.document.vocabularies.model.domain.PropertyMapping
 import aml.amf.AmfOps
+import aml.gen.GenDoc.{GenLiteral, optional}
 import aml.gen.context.GenContext
 import org.scalacheck.Gen
 import org.scalactic.anyvals.PosZInt
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{AsyncFlatSpec, Matchers}
-import org.yaml.model.YNode
 import org.yaml.render.YamlRender
 
 class GenDocWithContextSpec extends AsyncFlatSpec with Matchers with AmfOps with GeneratorDrivenPropertyChecks {
@@ -42,16 +42,18 @@ class GenDocWithContextSpec extends AsyncFlatSpec with Matchers with AmfOps with
 
   object LiteralsGenContext extends GenContext {
 
-    override def lit(property: PropertyMapping): Option[Gen[YNode]] = property match {
+    override def lit(property: PropertyMapping): Option[GenLiteral] = property match {
 
       /** Example matching by name. */
-      case propA if propA.name().option().contains("str") => Some(Gen.const("Str example"))
+      case propA if propA.name().option().contains("str") => Some(optional(propA)(Gen.const("Str example")))
 
       /** Example matching by property mapping. */
-      case propB if propB.nodePropertyMapping().option().contains("http://test.com/tmp#int") => Some(Gen.const(100))
+      case propB if propB.nodePropertyMapping().option().contains("http://test.com/tmp#int") =>
+        Some(optional(propB)(Gen.const(100)))
 
       /** Example matching by property range. */
-      case propC if propC.literalRange().option().contains(XsdTypes.xsdFloat.iri()) => Some(Gen.const(200.0))
+      case propC if propC.literalRange().option().contains(XsdTypes.xsdFloat.iri()) =>
+        Some(optional(propC)(Gen.const(200.0)))
 
       /** No match for other properties. */
       case _ => None

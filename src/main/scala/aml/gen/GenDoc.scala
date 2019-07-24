@@ -7,7 +7,7 @@ import amf.core.model.domain.DomainElement
 import amf.core.vocabulary.Namespace.{Shapes, Xsd}
 import amf.plugins.document.vocabularies.model.document.{Dialect, DialectLibrary}
 import amf.plugins.document.vocabularies.model.domain.{NodeMappable, NodeMapping, PropertyMapping, UnionNodeMapping}
-import aml.gen.GenDoc.{NodeGenerators, NodeMappables, multiple, optional}
+import aml.gen.GenDoc._
 import aml.gen.context.{EmptyGenContext, GenContext}
 import org.mulesoft.common.time.SimpleDateTime
 import org.scalacheck.Gen.{const, frequency, some}
@@ -77,7 +77,7 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables, conte
     value(property).map(_.map(YMapEntry(property.name().value(), _)))
   }
 
-  private def value(property: PropertyMapping): Gen[Option[YNode]] = {
+  private def value(property: PropertyMapping): GenLiteral = {
     property
       .literalRange()
       .option()
@@ -85,9 +85,9 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables, conte
       .getOrElse(obj(property))
   }
 
-  private def literal(range: String, property: PropertyMapping): Gen[Option[YNode]] = {
-    optional(property) {
-      custom(property) {
+  private def literal(range: String, property: PropertyMapping): GenLiteral = {
+    custom(property) {
+      optional(property) {
         multiple(property) {
           enum(property) {
             range match {
@@ -115,7 +115,7 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables, conte
     } else { g }
   }
 
-  private def custom(property: PropertyMapping)(g: Gen[YNode]): Gen[YNode] = context.lit(property).getOrElse(g)
+  private def custom(property: PropertyMapping)(g: GenLiteral): GenLiteral = context.lit(property).getOrElse(g)
 
   private def cast(range: String): Any => YNode = {
     range match {
@@ -243,6 +243,8 @@ case class GenDoc private (nodes: NodeGenerators, mappings: NodeMappables, conte
 }
 
 object GenDoc {
+
+  type GenLiteral = Gen[Option[YNode]]
 
   type NodeGenerators = mutable.Map[String, Gen[YMap]]
 
